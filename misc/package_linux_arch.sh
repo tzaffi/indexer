@@ -57,4 +57,4 @@ docker run ${DOCKER_RUN_OPTS} \
     -v `pwd`:/go/src/github.com/algorand/indexer \
     --workdir /go/src/github.com/algorand/indexer \
     "${BUILD_IMAGE}" \
-    bash -c "chown $(echo id -u) /go/src/github.com/algorand/indexer && chown $(echo id -u) /go/src/github.com/algorand/indexer && make ${MAKE_TARGET}"
+    bash -c "chown $(echo id -u) . && make ${MAKE_TARGET}"
