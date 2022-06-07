@@ -96,7 +96,7 @@ func TestRunMigration(t *testing.T) {
 		AlgodToken:     "AAAAA",
 	}
 	// migrate 3 rounds
-	err = RunMigration(3, &opts)
+	err = RunMigrationSimple(3, &opts)
 	assert.NoError(t, err)
 	genesis := test.MakeGenesis()
 	genesisBlock := test.MakeGenesisBlock()
@@ -109,7 +109,7 @@ func TestRunMigration(t *testing.T) {
 	l.Close()
 
 	// migration continues from last round
-	err = RunMigration(5, &opts)
+	err = RunMigrationSimple(5, &opts)
 	assert.NoError(t, err)
 	l, err = ledger.OpenLedger(logging.NewLogger(), filepath.Join(path.Dir(opts.IndexerDatadir), "ledger"), false, initState, algodConfig.GetDefaultLocal())
 	assert.NoError(t, err)

@@ -15,6 +15,7 @@ import (
 	"github.com/algorand/go-algorand/data/bookkeeping"
 	"github.com/algorand/go-algorand/ledger"
 	"github.com/algorand/go-algorand/logging"
+	"github.com/algorand/go-algorand/node"
 	"github.com/algorand/go-algorand/protocol"
 	"github.com/algorand/go-algorand/rpcs"
 	"github.com/algorand/indexer/fetcher"
@@ -25,8 +26,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// RunMigration executes the migration core functionality.
-func RunMigration(round uint64, opts *idb.IndexerDbOptions) error {
+// RunMigrationSimple executes the migration core functionality.
+func RunMigrationSimple(round uint64, opts *idb.IndexerDbOptions) error {
 	logger := log.New()
 	ctx, cf := context.WithCancel(context.Background())
 	defer cf()
@@ -45,46 +46,46 @@ func RunMigration(round uint64, opts *idb.IndexerDbOptions) error {
 	var bot fetcher.Fetcher
 	var err error
 	if opts.IndexerDatadir == "" {
-		return fmt.Errorf("RunMigration() err: indexer data directory missing")
+		return fmt.Errorf("RunMigrationSimple() err: indexer data directory missing")
 	}
 	// create algod client
 	if opts.AlgodDataDir != "" {
 		bot, err = fetcher.ForDataDir(opts.AlgodDataDir, logger)
 		if err != nil {
-			return fmt.Errorf("RunMigration() err: %w", err)
+			return fmt.Errorf("RunMigrationSimple() err: %w", err)
 		}
 	} else if opts.AlgodAddr != "" && opts.AlgodToken != "" {
 		bot, err = fetcher.ForNetAndToken(opts.AlgodAddr, opts.AlgodToken, logger)
 		if err != nil {
-			return fmt.Errorf("RunMigration() err: %w", err)
+			return fmt.Errorf("RunMigrationSimple() err: %w", err)
 		}
 	} else {
-		return fmt.Errorf("RunMigration() err: unable to create algod client")
+		return fmt.Errorf("RunMigrationSimple() err: unable to create algod client")
 	}
 
 	logger.Info("initializing ledger")
 	genesis, err := getGenesis(bot.Algod())
 	if err != nil {
-		return fmt.Errorf("RunMigration() err: %w", err)
+		return fmt.Errorf("RunMigrationSimple() err: %w", err)
 	}
 	genesisBlock, err := getGenesisBlock(bot.Algod())
 	if err != nil {
-		return fmt.Errorf("RunMigration() err: %w", err)
+		return fmt.Errorf("RunMigrationSimple() err: %w", err)
 	}
 	initState, err := util.CreateInitState(&genesis, &genesisBlock)
 	if err != nil {
-		return fmt.Errorf("RunMigration() err: %w", err)
+		return fmt.Errorf("RunMigrationSimple() err: %w", err)
 	}
 
 	localLedger, err := ledger.OpenLedger(logging.NewLogger(), filepath.Join(path.Dir(opts.IndexerDatadir), "ledger"), false, initState, algodConfig.GetDefaultLocal())
 	if err != nil {
-		return fmt.Errorf("RunMigration() err: %w", err)
+		return fmt.Errorf("RunMigrationSimple() err: %w", err)
 	}
 	defer localLedger.Close()
 	bot.SetNextRound(uint64(localLedger.Latest()) + 1)
 	proc, err := blockprocessor.MakeProcessor(localLedger, nil)
 	if err != nil {
-		return fmt.Errorf("RunMigration() err: %w", err)
+		return fmt.Errorf("RunMigrationSimple() err: %w", err)
 	}
 	handler := blockHandler(round, proc, cf, 1*time.Second)
 	bot.SetBlockHandler(handler)
@@ -167,4 +168,48 @@ func getGenesisBlock(client *algod.Client) (bookkeeping.Block, error) {
 	}
 
 	return block.Block, nil
+}
+
+// RunMigrationFastCatchup executes the migration core functionality.
+func RunMigrationFastCatchup(round uint64, opts *idb.IndexerDbOptions) error {
+	var bot fetcher.Fetcher
+	var err error
+	if opts.IndexerDatadir == "" {
+		return fmt.Errorf("RunMigrationFastCatchup err: indexer data directory missing")
+	}
+	// create algod client
+	logger := log.New()
+	if opts.AlgodDataDir != "" {
+		bot, err = fetcher.ForDataDir(opts.AlgodDataDir, logger)
+		if err != nil {
+			return fmt.Errorf("RunMigrationFastCatchup err: %w", err)
+		}
+	} else if opts.AlgodAddr != "" && opts.AlgodToken != "" {
+		bot, err = fetcher.ForNetAndToken(opts.AlgodAddr, opts.AlgodToken, logger)
+		if err != nil {
+			return fmt.Errorf("RunMigrationFastCatchup err: %w", err)
+		}
+	} else {
+		return fmt.Errorf("RunMigrationFastCatchup() err: unable to create algod client")
+	}
+
+	cfg := algodConfig.AutogenLocal
+	genesis, err := getGenesis(bot.Algod())
+	node, err := node.MakeFull(
+		logging.NewLogger(),
+		opts.IndexerDatadir,
+		cfg,
+		nil,
+		genesis)
+
+	node.Start()
+	time.Sleep(5 * time.Second)
+	status, err := node.Status()
+	node.StartCatchup("21250000#X3WN3DRODMATWICOVR4PKU6KPMUB6ISJHDDD4IR3KVCD3PEFHOQQ")
+	for uint64(status.LastRound) < round {
+		time.Sleep(2 * time.Second)
+		status, err = node.Status()
+	}
+	node.Stop()
+	return nil
 }
