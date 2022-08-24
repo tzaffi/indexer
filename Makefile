@@ -26,8 +26,9 @@ export GO_IMAGE = golang:$(shell go version | cut -d ' ' -f 3 | tail -c +3 )
 cmd/algorand-indexer/algorand-indexer: idb/postgres/internal/schema/setup_postgres_sql.go go-algorand
 	cd cmd/algorand-indexer && go build -ldflags="${GOLDFLAGS}"
 
-go-algorand:
-	git submodule update --init && cd third_party/go-algorand && \
+# DO NOT MERGE THIS!
+go-algorand: go-avm-box
+	cd third_party/go-algorand && \
 		make crypto/libs/`scripts/ostype.sh`/`scripts/archtype.sh`/lib/libsodium.a
 
 idb/postgres/internal/schema/setup_postgres_sql.go:	idb/postgres/internal/schema/setup_postgres.sql
@@ -69,9 +70,46 @@ integration: cmd/algorand-indexer/algorand-indexer
 
 e2e: cmd/algorand-indexer/algorand-indexer
 	cd misc && docker-compose build --build-arg GO_IMAGE=${GO_IMAGE} && docker-compose up --exit-code-from e2e
+	
+local-goal.build:
+	touch local-goal.build && cd third_party/go-algorand && make install
+
+clean:
+	rm local-goal.build
+
+CONNECTION_STRING	:= "host=e2e-db port=45432 user=algorand password=algorand dbname=indexer_db sslmode=disable"
+CI_E2E_FILENAME		:= "feature-avm-box"
+INDEXER_BIN			:= "/opt/go/indexer/cmd/algorand-indexer/algorand-indexer"
+e2e-local: cmd/algorand-indexer/algorand-indexer local-goal.build
+	cd misc && pwd && \
+		docker compose up -d e2e-db && \
+		cd - && pwd && \
+		python3 misc/e2elive.py --verbose --connection-string $(CONNECTION_STRING) --s3-source-net $(CI_E2E_FILENAME) --indexer-bin $(INDEXER_BIN) --indexer-port 9890 && \
+		cd misc && pwd && \
+		docker compose down	
+	# docker-compose build --build-arg GO_IMAGE=${GO_IMAGE} && docker-compose up --exit-code-from e2e
+
+
+ze2e-build:
+	cd misc && docker-compose build --build-arg GO_IMAGE=${GO_IMAGE}
+
+ze2e:
+	cd misc && docker-compose up
+
+ze2e-ps:
+	cd misc && docker-compose ps
+
+ze2e-psql-connection:
+	cd misc && docker-compose exec e2e echo "$${CONNECTION_STRING}"
+
+ze2e-submodule-print:
+	cd misc && docker-compose exec e2e bash -c "cd /opt/go/indexer/third_party/go-algorand && git rev-parse HEAD"
+
+ze2e-live:
+	cd misc && docker-compose exec e2e python3 misc/e2elive.py --connection-string "host=e2e-db port=5432 user=algorand password=algorand dbname=indexer_db sslmode=disable" --indexer-bin /opt/go/indexer/cmd/algorand-indexer/algorand-indexer --indexer-port 9890
 
 deploy:
-	mule/deploy.sh
+	mule/deploy.sh 
 
 sign:
 	mule/sign.sh
@@ -94,3 +132,40 @@ indexer-v-algod-swagger:
 indexer-v-algod: nightly-setup indexer-v-algod-swagger nightly-teardown
 
 .PHONY: test e2e integration fmt lint deploy sign test-package package fakepackage cmd/algorand-indexer/algorand-indexer idb/mocks/IndexerDb.go go-algorand indexer-v-algod
+
+# TEMPORARY RECIPE. DO NOT MERGE.
+go-avm-box:
+	echo "HELLO, this is a NO-OP currently"
+	# test -h third_party/go-algorand && exit 0 || exit 1
+
+
+LOCAL_GO_ALGORAND = "/Users/zeph/github/tzaffi/go-algorand"
+# "/Users/zeph/github/cce/go-algorand"
+zymlocal:
+	mv third_party/go-algorand third_party/zo-algorand
+	ln -s $(LOCAL_GO_ALGORAND) third_party/go-algorand
+
+dezymlocal:
+	rm third_party/go-algorand
+	mv third_party/zo-algorand third_party/go-algorand
+
+ALGOD_TOKEN = 1a64c773ecb6416d90390cac008da27cfe4d3e85143723e2febf7878271fcfd8
+INDEXER_DB = "host=127.0.0.1 user=postgres password=zephr0cks dbname=indexerboxes"
+ALGOD_PORT = 8080
+zrun:
+	# ./cmd/algorand-indexer/algorand-indexer daemon -i "/Users/zeph/indexer/" -c "indexer.yml"
+	./cmd/algorand-indexer/algorand-indexer daemon -i /Users/zeph/indexer/ \
+	 	-P $(INDEXER_DB) \
+		--pidfile /Users/zeph/indexer/algorand-indexer.pid --algod-net 127.0.0.1:$(ALGOD_PORT) \
+		--algod-token $(ALGOD_TOKEN) \
+		-l debug
+
+
+LOGFILE = boxes.log
+zrunquiet:
+	# ./cmd/algorand-indexer/algorand-indexer daemon -i ~/indexer/ -c "indexer.yml" > $(LOGFILE)
+	./cmd/algorand-indexer/algorand-indexer daemon -i /Users/zeph/indexer/ \
+	 	-P $(INDEXER_DB) \
+		--pidfile /Users/zeph/indexer/algorand-indexer.pid --algod-net 127.0.0.1:$(ALGOD_PORT) \
+		--algod-token $(ALGOD_TOKEN) \
+		-l debug > $(LOGFILE)
