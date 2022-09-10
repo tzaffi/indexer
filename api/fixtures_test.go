@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -64,7 +65,7 @@ type testCase struct {
 	Name         string       `json:"name"`
 	Request      requestInfo  `json:"request"`
 	Response     responseInfo `json:"response"`
-	Witness      interface{}  `json:"witness"`
+	Witness      *witness     `json:"witness"`
 	WitnessError *string      `json:"witnessError"`
 }
 type requestInfo struct {
@@ -81,121 +82,31 @@ type responseInfo struct {
 	StatusCode int    `json:"statusCode"`
 	Body       string `json:"body"`
 }
-type prover func(responseInfo) (interface{}, *string)
+type prover func(responseInfo) (*witness, *string)
 
-// ---- BEGIN provers / witness generators ---- //
-
-func accountsProof(resp responseInfo) (wit interface{}, errStr *string) {
-	accounts := generated.AccountsResponse{}
-	errStr = parseForProver(resp, &accounts)
-	if errStr != nil {
-		return
-	}
-	wit = struct {
-		Type     string                     `json:"goType"`
-		Accounts generated.AccountsResponse `json:"accounts"`
-	}{
-		Type:     fmt.Sprintf("%T", accounts),
-		Accounts: accounts,
-	}
-	return
-}
-func accountInfoProof(resp responseInfo) (wit interface{}, errStr *string) {
-	account := generated.AccountResponse{}
-	errStr = parseForProver(resp, &account)
-	if errStr != nil {
-		return
-	}
-	wit = struct {
-		Type    string                    `json:"goType"`
-		Account generated.AccountResponse `json:"account"`
-	}{
-		Type:    fmt.Sprintf("%T", account),
-		Account: account,
-	}
-	return
+type witness struct {
+	Type           string      `json:"goType"`
+	ParsedResponse interface{} `json:"parsedResponse"`
 }
 
-func appsProof(resp responseInfo) (wit interface{}, errStr *string) {
-	apps := generated.ApplicationsResponse{}
-	errStr = parseForProver(resp, &apps)
-	if errStr != nil {
-		return
-	}
-	wit = struct {
-		Type string                         `json:"goType"`
-		Apps generated.ApplicationsResponse `json:"apps"`
-	}{
-		Type: fmt.Sprintf("%T", apps),
-		Apps: apps,
-	}
-	return
-}
-
-func appInfoProof(resp responseInfo) (wit interface{}, errStr *string) {
-	app := generated.ApplicationResponse{}
-	errStr = parseForProver(resp, &app)
-	if errStr != nil {
-		return
-	}
-	wit = struct {
-		Type string                        `json:"goType"`
-		App  generated.ApplicationResponse `json:"app"`
-	}{
-		Type: fmt.Sprintf("%T", app),
-		App:  app,
-	}
-	return
-}
-
-func boxProof(resp responseInfo) (wit interface{}, errStr *string) {
-	box := generated.BoxResponse{}
-	errStr = parseForProver(resp, &box)
-	if errStr != nil {
-		return
-	}
-	wit = struct {
-		Type string                `json:"goType"`
-		Box  generated.BoxResponse `json:"box"`
-	}{
-		Type: fmt.Sprintf("%T", box),
-		Box:  box,
-	}
-	return
-}
-
-func boxesProof(resp responseInfo) (wit interface{}, errStr *string) {
-	boxes := generated.BoxesResponse{}
-	errStr = parseForProver(resp, &boxes)
-	if errStr != nil {
-		return
-	}
-	wit = struct {
-		Type  string                  `json:"goType"`
-		Boxes generated.BoxesResponse `json:"boxes"`
-	}{
-		Type:  fmt.Sprintf("%T", boxes),
-		Boxes: boxes,
-	}
-	return
-}
-
-func parseForProver(resp responseInfo, reconstructed interface{}) (errStr *string) {
+func responseParser[R any](resp responseInfo) (wit *witness, errStr *string) {
 	if resp.StatusCode >= 300 {
 		s := fmt.Sprintf("%d error", resp.StatusCode)
 		errStr = &s
 		return
 	}
-	err := json.Unmarshal([]byte(resp.Body), reconstructed)
+
+	model := new(R)
+	err := json.Unmarshal([]byte(resp.Body), model)
 	if err != nil {
 		s := fmt.Sprintf("unmarshal err: %s", err)
 		errStr = &s
 		return
 	}
-	return nil
-}
 
-// ---- END provers / witness generators ---- //
+	wit = &witness{fmt.Sprintf("%T", *model), *model}
+	return
+}
 
 func (f *testCase) proverFromEndoint() (string, prover, error) {
 	path := f.Request.Path
@@ -215,24 +126,24 @@ var proverRoutes = proofPath{
 		"v2": {
 			parts: map[string]proofPath{
 				"accounts": {
-					proof: accountsProof,
+					proof: responseParser[generated.AccountsResponse],
 					parts: map[string]proofPath{
 						":account-id": {
-							proof: accountInfoProof,
+							proof: responseParser[generated.AccountResponse],
 						},
 					},
 				},
 				"applications": {
-					proof: appsProof,
+					proof: responseParser[generated.ApplicationsResponse],
 					parts: map[string]proofPath{
 						":application-id": {
-							proof: appInfoProof,
+							proof: responseParser[generated.ApplicationResponse],
 							parts: map[string]proofPath{
 								"box": {
-									proof: boxProof,
+									proof: responseParser[generated.BoxResponse],
 								},
 								"boxes": {
-									proof: boxesProof,
+									proof: responseParser[generated.BoxesResponse],
 								},
 							},
 						},
@@ -303,7 +214,7 @@ func setupLiveServerAndReturnShutdownFunc(t *testing.T, db *postgres.IndexerDb) 
 }
 
 func readFixture(t *testing.T, path string, seed *fixture) fixture {
-	fileBytes, err := ioutil.ReadFile(path + seed.File)
+	fileBytes, err := os.ReadFile(path + seed.File)
 	require.NoError(t, err)
 
 	saved := fixture{}
@@ -317,7 +228,7 @@ func writeFixture(t *testing.T, path string, save fixture) {
 	fileBytes, err := json.MarshalIndent(save, "", "  ")
 	require.NoError(t, err)
 
-	err = ioutil.WriteFile(path+save.File, fileBytes, 0644)
+	err = os.WriteFile(path+save.File, fileBytes, 0644)
 	require.NoError(t, err)
 }
 
@@ -343,7 +254,7 @@ func getRequest(t *testing.T, endpoint string, params []param) (path string, res
 	require.NoError(t, reqErr)
 	defer resp.Body.Close()
 
-	body, bodyErr = ioutil.ReadAll(resp.Body)
+	body, bodyErr = io.ReadAll(resp.Body)
 
 	if verbose {
 		fmt.Printf(`
@@ -448,20 +359,6 @@ func validateLiveVsSaved(t *testing.T, seed *fixture, live *fixture) {
 	require.True(t, saved.Frozen, "Please ensure that the saved fixture is frozen before merging.")
 }
 
-// When the provided seed has `seed.Frozen == false` assertions will be skipped.
-// On the other hand, when `seed.Frozen == false` assertions are made:
-// * ownerVariable == saved.Owner == live.Owner
-// * saved.File == live.File
-// * len(saved.Cases) == len(live.Cases)
-// * for each savedCase:
-//   - savedCase.Name == liveCase.Name
-//   - savedCase.Request == liveCase.Request
-//   - recalculated savedCase.Witness == recalculated liveCase.Witness
-//
-// Regardless of `seed.Frozen`, `live` is saved to `fixturesDirectory + "_" + seed.File`
-// NOTE: `live.Witness` is always recalculated via `seed.proof(live.Response)`
-// NOTE: by design, the function always fails the test in the case that the seed fixture is not frozen
-// as a reminder to freeze the test before merging, so that regressions may be detected going forward.
 func validateOrGenerateFixtures(t *testing.T, db *postgres.IndexerDb, seed fixture, owner string) {
 	require.Equal(t, owner, seed.Owner, "mismatch between purported owners of fixture")
 

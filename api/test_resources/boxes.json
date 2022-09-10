@@ -1,7 +1,7 @@
 {
   "file": "boxes.json",
   "owner": "TestBoxes",
-  "lastModified": "2022-09-08 21:02:40.534512 -0500 CDT m=+3.770931351",
+  "lastModified": "2022-09-09 22:00:36.93575 -0500 CDT m=+3.468172223",
   "frozen": true,
   "cases": [
     {
@@ -18,7 +18,7 @@
       },
       "witness": {
         "goType": "generated.AccountsResponse",
-        "accounts": {
+        "parsedResponse": {
           "accounts": [
             {
               "address": "GJR76Q6OXNZ2CYIVCFCDTJRBAAR6TYEJJENEII3G2U3JH546SPBQA62IFY",
@@ -266,7 +266,7 @@
       },
       "witness": {
         "goType": "generated.ApplicationsResponse",
-        "apps": {
+        "parsedResponse": {
           "applications": [
             {
               "created-at-round": 1,
@@ -358,7 +358,7 @@
       },
       "witness": {
         "goType": "generated.ApplicationResponse",
-        "app": {
+        "parsedResponse": {
           "application": {
             "created-at-round": 1,
             "deleted": false,
@@ -396,7 +396,7 @@
       },
       "witness": {
         "goType": "generated.ApplicationResponse",
-        "app": {
+        "parsedResponse": {
           "application": {
             "created-at-round": 1,
             "deleted": false,
@@ -434,7 +434,7 @@
       },
       "witness": {
         "goType": "generated.ApplicationResponse",
-        "app": {
+        "parsedResponse": {
           "application": {
             "created-at-round": 1,
             "deleted": false,
@@ -472,7 +472,7 @@
       },
       "witness": {
         "goType": "generated.AccountResponse",
-        "account": {
+        "parsedResponse": {
           "account": {
             "address": "LMTOYRT2WPSUY6JTCW2URER6YN3GETJ5FHTQBA55EVK66JG2QOB32WPIHY",
             "amount": 500000,
@@ -510,7 +510,7 @@
       },
       "witness": {
         "goType": "generated.AccountResponse",
-        "account": {
+        "parsedResponse": {
           "account": {
             "address": "LMTOYRT2WPSUY6JTCW2URER6YN3GETJ5FHTQBA55EVK66JG2QOB32WPIHY",
             "amount": 500000,
@@ -548,7 +548,7 @@
       },
       "witness": {
         "goType": "generated.AccountResponse",
-        "account": {
+        "parsedResponse": {
           "account": {
             "address": "WCS6TVPJRBSARHLN2326LRU5BYVJZUKI2VJ53CAWKYYHDE455ZGKANWMGM",
             "amount": 500000,
@@ -631,7 +631,7 @@
       },
       "witness": {
         "goType": "generated.BoxesResponse",
-        "boxes": {
+        "parsedResponse": {
           "application-id": 3,
           "boxes": []
         }
@@ -652,7 +652,7 @@
       },
       "witness": {
         "goType": "generated.BoxesResponse",
-        "boxes": {
+        "parsedResponse": {
           "application-id": 5,
           "boxes": [
             {
@@ -714,7 +714,7 @@
       },
       "witness": {
         "goType": "generated.BoxesResponse",
-        "boxes": {
+        "parsedResponse": {
           "application-id": 1,
           "boxes": [
             {
@@ -769,7 +769,7 @@
       },
       "witness": {
         "goType": "generated.BoxesResponse",
-        "boxes": {
+        "parsedResponse": {
           "application-id": 1,
           "boxes": [
             {
@@ -810,7 +810,7 @@
       },
       "witness": {
         "goType": "generated.BoxesResponse",
-        "boxes": {
+        "parsedResponse": {
           "application-id": 1,
           "boxes": [
             {
@@ -851,7 +851,7 @@
       },
       "witness": {
         "goType": "generated.BoxesResponse",
-        "boxes": {
+        "parsedResponse": {
           "application-id": 1,
           "boxes": [
             {
@@ -916,7 +916,7 @@
       },
       "witness": {
         "goType": "generated.BoxesResponse",
-        "boxes": {
+        "parsedResponse": {
           "application-id": 1,
           "boxes": [
             {
@@ -957,7 +957,7 @@
       },
       "witness": {
         "goType": "generated.BoxesResponse",
-        "boxes": {
+        "parsedResponse": {
           "application-id": 1,
           "boxes": []
         }
@@ -1137,7 +1137,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "YSBncmVhdCBib3g=",
           "value": "aXQncyBhIHdvbmRlcmZ1bCBib3gAAAAAAAAAAAAAAAA="
         }
@@ -1163,7 +1163,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "c3Ry",
           "value": "c3RyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
@@ -1189,7 +1189,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "AAAAAAAAAGQ=",
           "value": "AAAAAAAAAGQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
@@ -1215,7 +1215,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "YmFzZTMy",
           "value": "YmFzZTMyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
@@ -1241,7 +1241,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "YjY0",
           "value": "YjY0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
@@ -1267,7 +1267,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "YmFzZTY0",
           "value": "YmFzZTY0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
@@ -1293,7 +1293,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "c3RyaW5n",
           "value": "c3RyaW5nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
@@ -1319,7 +1319,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "AAAAAAAAACo=",
           "value": "AAAAAAAAACoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
@@ -1345,7 +1345,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "AAAAAAAAAY8ADAAWAAhwbHMgcGFzcwACgA==",
           "value": "AAAAAAAAAY8ADAAWAAhwbHMgcGFzcwACgAAAAAAAAAA="
         }
@@ -1371,7 +1371,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "WybsRnqz5Ux5MxW1SJI+w3ZiTT0p5wCDvSVV7yTag4M=",
           "value": "WybsRnqz5Ux5MxW1SJI+w3ZiTT0p5wCDvSVV7yTag4M="
         }
@@ -1397,7 +1397,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "1LFyyFkEBZ/hBaCpnDqx+b2N0CaSUWnwmeCdufrVxNg=",
           "value": "1LFyyFkEBZ/hBaCpnDqx+b2N0CaSUWnwmeCdufrVxNg="
         }
@@ -1423,7 +1423,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "YjMy",
           "value": "YjMyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
@@ -1449,7 +1449,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "Ynl0ZSBiYXNlMzI=",
           "value": "Ynl0ZSBiYXNlMzIAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
@@ -1475,7 +1475,7 @@
       },
       "witness": {
         "goType": "generated.BoxResponse",
-        "box": {
+        "parsedResponse": {
           "name": "Ynl0ZSBiYXNlNjQ=",
           "value": "Ynl0ZSBiYXNlNjQAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
