@@ -5,6 +5,7 @@ This tool is used for testing Indexer import performance. It does this by genera
 ## Scenario Configuration
 
 Block generator uses a YAML config file to describe the composition of each randomly generated block. There are three levels of configuration:
+
 1. Setup
 2. Transaction type distribution
 3. Transaction type specific configuration
@@ -12,7 +13,8 @@ Block generator uses a YAML config file to describe the composition of each rand
 At the time of writing, the block generator supports **payment** and **asset** transactions. The settings are hopefully, more or less, obvious. Distributions are specified as fractions of one, and the sum of all options must add up to one.
 
 Here is an example which uses all of the current options. Notice that the synthetic blocks are not required to follow algod limits, in this case the block size is specified as 19999, or four times larger than the current block size limit:
-```
+
+```yml
 name: "Mixed (jumbo)"
 genesis_accounts: 10000
 genesis_account_balance: 1000000000000
@@ -42,8 +44,9 @@ The block generator can run in one of two modes, a standalone **daemon**, or a t
 
 In standalone mode, a block-generator process starts and exposes the mock algod endpoints for **/genesis** and **/v2/blocks/{block}**. If you choose to query them manually, it only supports fetching blocks sequentially. This is due to the fact that it generates a pseudorandom stream of transactions and after each random transaction the state increments to the next.
 
-Here is the help output: 
-```bash
+Here is the help output:
+
+```sh
 ~$ ./block-generator daemon -h
 Start the generator daemon in standalone mode.
 
@@ -63,7 +66,8 @@ For our usage, we want to run the same set of tests consistently across many sce
 The results of the testing are written to the directory specified by the **--report-directory** option, and include many different metrics. In addition to the report, the indexer log is written to this directory. The files are named according to the scenario file, and end in "report" or "log".
 
 Here is an example report from running with a test duration of "1h":
-```
+
+```env
 test_duration_seconds:3600
 test_duration_actual_seconds:3600.056457
 transaction_pay_total:30024226
@@ -93,7 +97,8 @@ final_uptime_seconds:3600.06
 ```
 
 Here is the help output:
-```bash
+
+```sh
 ~$ ./block-generator runner -h
 Run test suite and collect results.
 

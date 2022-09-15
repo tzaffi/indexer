@@ -31,8 +31,8 @@ const (
 	paymentTx           TxTypeID = "pay"
 	paymentAcctCreateTx TxTypeID = "pay_create"
 	assetTx             TxTypeID = "asset"
+	applicationCallTx   TxTypeID = "appl"
 	//keyRegistrationTx TxTypeID = "keyreg"
-	//applicationCallTx TxTypeID = "appl"
 
 	// Asset Tx IDs
 	assetCreate  TxTypeID = "asset_create"
@@ -286,7 +286,7 @@ func (g *generator) WriteGenesis(output io.Writer) error {
 }
 
 func getTransactionOptions() []interface{} {
-	return []interface{}{paymentTx, assetTx}
+	return []interface{}{paymentTx, assetTx, applicationCallTx}
 }
 
 func (g *generator) generateTransaction(round uint64, intra uint64) (transactions.SignedTxn, transactions.ApplyData, error) {
@@ -300,6 +300,8 @@ func (g *generator) generateTransaction(round uint64, intra uint64) (transaction
 		return g.generatePaymentTxn(round, intra)
 	case assetTx:
 		return g.generateAssetTxn(round, intra)
+	case applicationCallTx:
+		return g.generateApplicationTxn(round, intra)
 	default:
 		return transactions.SignedTxn{}, transactions.ApplyData{}, fmt.Errorf("no generator available for %s", selection)
 	}
@@ -647,6 +649,25 @@ func (g *generator) generateAssetTxnInternalHint(txType TxTypeID, round uint64, 
 }
 
 func (g *generator) generateAssetTxn(round uint64, intra uint64) (transactions.SignedTxn, transactions.ApplyData, error) {
+	start := time.Now()
+	selection, err := weightedSelection(g.assetTxWeights, getAssetTxOptions(), assetXfer)
+	if err != nil {
+		return transactions.SignedTxn{}, transactions.ApplyData{}, err
+	}
+
+	actual, txn := g.generateAssetTxnInternal(selection.(TxTypeID), round, intra)
+	defer g.recordData(actual, start)
+
+	if txn.Type == "" {
+		fmt.Println("Empty asset transaction.")
+		os.Exit(1)
+	}
+
+	return signTxn(txn), transactions.ApplyData{}, nil
+}
+
+// generateApplicationTxn is currently masquerading as an appl txn generator when in reality it is an asset txn generator
+func (g *generator) generateApplicationTxn(round uint64, intra uint64) (transactions.SignedTxn, transactions.ApplyData, error) {
 	start := time.Now()
 	selection, err := weightedSelection(g.assetTxWeights, getAssetTxOptions(), assetXfer)
 	if err != nil {
